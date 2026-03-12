@@ -2,18 +2,23 @@ import Foundation
 
 final class CountryPlansStore {
     private let fileName = "country_plans.json"
+    private var canPersist = true
     
     func load() -> [CountryPlan] {
         do {
             let url = try fileURL()
             
             guard FileManager.default.fileExists(atPath: url.path) else {
+                canPersist = true
                 return []
             }
             
             let data = try Data(contentsOf: url)
-            return try JSONDecoder().decode([CountryPlan].self, from: data)
+            let plans = try JSONDecoder().decode([CountryPlan].self, from: data)
+            canPersist = true
+            return plans
         } catch {
+            canPersist = false
             // Fail soft on corrupt/legacy files so the app still opens and users can recreate plans.
             print("CountryPlansStore load error: \(error)")
             return []
@@ -21,6 +26,11 @@ final class CountryPlansStore {
     }
 
     func save(_ plans: [CountryPlan]) {
+        guard canPersist else {
+            print("CountryPlansStore save skipped because the last load failed.")
+            return
+        }
+        
         do {
             let url = try fileURL()
             let data = try JSONEncoder().encode(plans)

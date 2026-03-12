@@ -32,51 +32,24 @@ final class CountryPlansViewModel: ObservableObject {
         persist()
     }
     
-    func updatePlan(
-        planId: UUID,
-        startDate: Date,
-        endDate: Date,
-        budget: Double,
-        peopleCount: Int,
-        notes: String,
-        rating: Int?
-    ) {
-        guard let index = plans.firstIndex(where: { $0.id == planId }) else { return }
-        
-        plans[index].startDate = startDate
-        plans[index].endDate = endDate
-        plans[index].budget = budget
-        plans[index].peopleCount = peopleCount
-        plans[index].notes = notes
-        plans[index].rating = rating
-        
-        persist()
-    }
-    
-    func updateRating(planId: UUID, rating: Int?) {
-        guard let index = plans.firstIndex(where: { $0.id == planId }) else { return }
-        plans[index].rating = rating
-        persist()
-    }
-    
     func delete(planId: UUID) {
         plans.removeAll { $0.id == planId }
         persist()
     }
     
     var upcomingPlans: [CountryPlan] {
-        // Use start-of-day boundaries so plans starting later today are still "upcoming."
+        // Keep trips visible as upcoming until they have fully ended.
         let todayStart = Calendar.current.startOfDay(for: Date())
         return plans
-            .filter { $0.startDate >= todayStart }
+            .filter { $0.endDate >= todayStart }
             .sorted { $0.startDate < $1.startDate }
     }
     
     var pastPlans: [CountryPlan] {
-        // Keep past plans in reverse chronological order to show most recent trips first.
+        // A trip is only past once its end date is before today.
         let todayStart = Calendar.current.startOfDay(for: Date())
         return plans
-            .filter { $0.startDate < todayStart }
+            .filter { $0.endDate < todayStart }
             .sorted { $0.startDate > $1.startDate }
     }
     
