@@ -75,16 +75,8 @@ final class CountryPlanEditorViewModel: ObservableObject {
         updated.notes = notes
         // Prevent stale ratings from being saved while a trip is still ongoing or in the future
         updated.rating = canRate ? rating : nil
-        
-        plansVM.updatePlan(
-            planId: updated.id,
-            startDate: updated.startDate,
-            endDate: updated.endDate,
-            budget: updated.budget,
-            peopleCount: updated.peopleCount,
-            notes: updated.notes,
-            rating: updated.rating
-        )
+
+        plansVM.savePlan(updated)
     }
     
     // Also revalidates rating because shifting dates can make a trip "not over" again.

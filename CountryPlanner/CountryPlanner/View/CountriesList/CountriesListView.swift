@@ -3,7 +3,7 @@ import SwiftUI
 struct CountriesListView: View {
     
     @StateObject private var countriesVM = CountriesListViewModel()
-    @StateObject private var favoritesVM = FavoritesViewModel()
+    @EnvironmentObject private var favoritesVM: FavoritesViewModel
     
     @State private var searchText: String = ""
     
@@ -19,20 +19,26 @@ struct CountriesListView: View {
         static let screenPadding: CGFloat = 16
         static let spacing: CGFloat = 3
         static let retryCornerRadius: CGFloat = 8
+        static let rowSpacing: CGFloat = 12
+        static let rowPadding: CGFloat = 12
+        static let rowCornerRadius: CGFloat = 14
+        static let favoriteButtonSize: CGFloat = 28
+    }
+    
+    private enum Icons {
+        static let favorite = "star"
+        static let favoriteFilled = "star.fill"
     }
     
 
     var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle(Strings.title)
-                .searchable(text: $searchText, prompt: Strings.searchPrompt)
-                .background(.ultraThinMaterial)
-        }
-
-        .task { 
-            await countriesVM.loadCountries() 
-        }
+        content
+            .navigationTitle(Strings.title)
+            .searchable(text: $searchText, prompt: Strings.searchPrompt)
+            .background(.ultraThinMaterial)
+            .task {
+                await countriesVM.loadCountries()
+            }
     }
     
     private var content: some View {
@@ -66,21 +72,36 @@ struct CountriesListView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Layout.spacing) {
                 ForEach(filteredCountries) { country in
-                    NavigationLink {
-                        CountryDetailView(country: country)
-                    } label: {
-                        CountryRowView(
-                            country: country,
-                            isFavorite: favoritesVM.isFavorite(country.favoriteId),
-                            onToggleFavorite: { favoritesVM.toggle(country.favoriteId) }
-                        )
+                    row(for: country)
                         .padding(.horizontal, Layout.screenPadding)
                         .padding(.vertical, Layout.spacing)
-                    }
-                    .buttonStyle(.plain)
                 }
             }
         }
+    }
+    
+    private func row(for country: Country) -> some View {
+        HStack(spacing: Layout.rowSpacing) {
+            NavigationLink {
+                CountryDetailView(country: country)
+            } label: {
+                CountryRowView(country: country)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Button {
+                favoritesVM.toggle(country.favoriteId)
+            } label: {
+                Image(systemName: favoriteIcon(for: country))
+                    .foregroundStyle(.yellow)
+                    .frame(width: Layout.favoriteButtonSize, height: Layout.favoriteButtonSize)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(Layout.rowPadding)
+        .background(Color.white)
+        .cornerRadius(Layout.rowCornerRadius)
     }
     
 
@@ -97,8 +118,15 @@ struct CountriesListView: View {
                 return a.name < b.name
             }
     }
+    
+    private func favoriteIcon(for country: Country) -> String {
+        favoritesVM.isFavorite(country.favoriteId) ? Icons.favoriteFilled : Icons.favorite
+    }
 }
 
 #Preview {
-    CountriesListView()
+    NavigationStack {
+        CountriesListView()
+            .environmentObject(FavoritesViewModel())
+    }
 }
