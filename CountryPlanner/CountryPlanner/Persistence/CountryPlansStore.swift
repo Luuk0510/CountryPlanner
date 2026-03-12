@@ -4,13 +4,13 @@ final class CountryPlansStore {
     private let fileName = "country_plans.json"
     
     func load() -> [CountryPlan] {
-        let url = fileURL()
-        
-        guard FileManager.default.fileExists(atPath: url.path) else {
-            return []
-        }
-        
         do {
+            let url = try fileURL()
+            
+            guard FileManager.default.fileExists(atPath: url.path) else {
+                return []
+            }
+            
             let data = try Data(contentsOf: url)
             return try JSONDecoder().decode([CountryPlan].self, from: data)
         } catch {
@@ -21,9 +21,8 @@ final class CountryPlansStore {
     }
 
     func save(_ plans: [CountryPlan]) {
-        let url = fileURL()
-        
         do {
+            let url = try fileURL()
             let data = try JSONEncoder().encode(plans)
             // Atomic write avoids leaving a partially written JSON file on interruption.
             try data.write(to: url, options: [.atomic])
@@ -32,8 +31,10 @@ final class CountryPlansStore {
         }
     }
 
-    private func fileURL() -> URL {
-        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    private func fileURL() throws -> URL {
+        guard let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            throw CocoaError(.fileNoSuchFile)
+        }
         return dir.appendingPathComponent(fileName)
     }
 }
