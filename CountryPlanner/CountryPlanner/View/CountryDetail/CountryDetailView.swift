@@ -167,7 +167,7 @@ private extension CountryDetailView {
     
     // Creates a new plan and opens the editor
     func addPlan() {
-        newPlanToEdit = countryPlansVM.createPlan(for: country)
+        newPlanToEdit = countryPlansVM.makeDraftPlan(for: country)
     }
     
     // Deletes the current plan if it exists

@@ -15,16 +15,21 @@ final class CountryPlansViewModel: ObservableObject {
         plans.first { $0.countryId == countryId }
     }
     
-    func createPlan(for country: Country) -> CountryPlan {
-        let newPlan = CountryPlan(
+    func makeDraftPlan(for country: Country) -> CountryPlan {
+        CountryPlan(
             countryId: country.id,
             countryName: country.name,
             imageName: country.flagUrl
         )
-        
-        plans.append(newPlan)
+    }
+    
+    func savePlan(_ plan: CountryPlan) {
+        if let index = plans.firstIndex(where: { $0.id == plan.id }) {
+            plans[index] = plan
+        } else {
+            plans.append(plan)
+        }
         persist()
-        return newPlan
     }
     
     func updatePlan(
